@@ -10,12 +10,25 @@ Simple clipboard tools get all blocks joined together.
 """
 
 import json
+import logging
 import os
 import re
 import shutil
 import subprocess
 import sys
 from enum import Enum
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+LOG_PATH = Path.home() / ".claude" / "hooks" / "copy-code-blocks.log"
+LOG_LEVEL = os.environ.get("CLAUDE_CLIPBOARD_LOG_LEVEL", "WARNING").upper()
+
+logger = logging.getLogger("copy-code-blocks")
+logger.setLevel(getattr(logging, LOG_LEVEL, logging.WARNING))
+
+_handler = RotatingFileHandler(LOG_PATH, maxBytes=100_000, backupCount=1)
+_handler.setFormatter(logging.Formatter("%(name)s: %(levelname)s: %(message)s"))
+logger.addHandler(_handler)
 
 
 class ClipboardBackend(Enum):
@@ -58,48 +71,64 @@ def detect_backend() -> ClipboardBackend | None:
 def copy_to_clipboard(text: str, backend: ClipboardBackend) -> None:
     """Copy text to clipboard using the specified backend."""
     env = os.environ.copy()
+    result = None
 
-    match backend:
-        case ClipboardBackend.COPYQ:
-            subprocess.run(
-                ["copyq", "add", "--", text],
-                env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.XCLIP:
-            subprocess.run(
-                ["xclip", "-selection", "clipboard"],
-                input=text.encode(), env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.XSEL:
-            subprocess.run(
-                ["xsel", "--clipboard", "--input"],
-                input=text.encode(), env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.WL_COPY:
-            subprocess.run(
-                ["wl-copy", "--", text],
-                env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.PBCOPY:
-            subprocess.run(
-                ["pbcopy"],
-                input=text.encode(), env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.CLIP_EXE:
-            subprocess.run(
-                ["clip.exe"],
-                input=text.encode("utf-16-le"), env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.POWERSHELL:
-            subprocess.run(
-                ["powershell.exe", "-NoProfile", "-Command", "Set-Clipboard", "-Value", text],
-                env=env, check=False, timeout=5,
-            )
-        case ClipboardBackend.WIN32YANK:
-            subprocess.run(
-                ["win32yank", "-i", "--crlf"],
-                input=text.encode(), env=env, check=False, timeout=5,
-            )
+    try:
+        match backend:
+            case ClipboardBackend.COPYQ:
+                result = subprocess.run(
+                    ["copyq", "add", "--", text],
+                    env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.XCLIP:
+                result = subprocess.run(
+                    ["xclip", "-selection", "clipboard"],
+                    input=text.encode(), env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.XSEL:
+                result = subprocess.run(
+                    ["xsel", "--clipboard", "--input"],
+                    input=text.encode(), env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.WL_COPY:
+                result = subprocess.run(
+                    ["wl-copy", "--", text],
+                    env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.PBCOPY:
+                result = subprocess.run(
+                    ["pbcopy"],
+                    input=text.encode(), env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.CLIP_EXE:
+                result = subprocess.run(
+                    ["clip.exe"],
+                    input=text.encode("utf-16-le"), env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.POWERSHELL:
+                result = subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-Command", "Set-Clipboard", "-Value", text],
+                    env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+            case ClipboardBackend.WIN32YANK:
+                result = subprocess.run(
+                    ["win32yank", "-i", "--crlf"],
+                    input=text.encode(), env=env, check=False, timeout=5,
+                    capture_output=True,
+                )
+
+        if result and result.returncode != 0:
+            stderr = result.stderr.decode(errors="replace").strip()
+            logger.warning("%s exited with code %d: %s", backend.value, result.returncode, stderr)
+    except subprocess.TimeoutExpired:
+        logger.warning("%s timed out after 5s", backend.value)
 
 
 def extract_code_blocks(text: str) -> list[str]:
@@ -112,19 +141,25 @@ def main() -> None:
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, EOFError):
+        logger.warning("Invalid JSON on stdin")
         return
 
     message = data.get("last_assistant_message", "")
     if not message:
+        logger.debug("No assistant message — skipping")
         return
 
     blocks = extract_code_blocks(message)
     if not blocks:
+        logger.debug("No code blocks found — skipping")
         return
 
     backend = detect_backend()
     if backend is None:
+        logger.warning("No clipboard backend found — install one of: copyq, xclip, xsel, wl-copy, pbcopy, clip.exe, win32yank")
         return
+
+    logger.debug("Found %d code block(s), using %s", len(blocks), backend.value)
 
     if backend in HISTORY_BACKENDS:
         # Each block as a separate clipboard entry (reversed so first = newest)
