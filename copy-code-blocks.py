@@ -144,8 +144,8 @@ def main() -> None:
         logger.warning("Invalid JSON on stdin")
         return
 
-    message = data.get("last_assistant_message", "")
-    if not message:
+    message = data.get("last_assistant_message")
+    if not isinstance(message, str) or not message:
         logger.debug("No assistant message — skipping")
         return
 
