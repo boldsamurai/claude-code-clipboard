@@ -46,6 +46,14 @@ class TestExtractCodeBlocks:
         text = "```python\nx = 1\n```"
         assert extract_code_blocks(text) == ["x = 1\n"]
 
+    def test_block_with_language_and_attributes(self):
+        text = '```python title="example"\nx = 1\n```'
+        assert extract_code_blocks(text) == ["x = 1\n"]
+
+    def test_block_with_complex_attributes(self):
+        text = '```js highlight={1,3} showLineNumbers\nconst x = 1;\n```'
+        assert extract_code_blocks(text) == ["const x = 1;\n"]
+
     def test_block_with_various_languages(self):
         text = "```bash\necho hi\n```\n```json\n{}\n```\n```rust\nfn main() {}\n```"
         assert extract_code_blocks(text) == [
@@ -79,7 +87,6 @@ class TestExtractCodeBlocks:
         text = "```\n    indented\n        more\n```"
         assert extract_code_blocks(text) == ["    indented\n        more\n"]
 
-    @pytest.mark.xfail(reason="Regex doesn't handle nested fences (4-backtick containing 3-backtick)")
     def test_block_with_backticks_inside(self):
         """A 4-backtick fence can contain 3-backtick lines inside."""
         text = "````\nsome\n```\nnested\n```\nmore\n````"

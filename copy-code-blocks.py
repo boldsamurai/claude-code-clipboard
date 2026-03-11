@@ -104,8 +104,8 @@ def copy_to_clipboard(text: str, backend: ClipboardBackend) -> None:
 
 def extract_code_blocks(text: str) -> list[str]:
     """Extract content from fenced code blocks (``` or ```` etc.)."""
-    pattern = r"`{3,}(?:\w*)\n(.*?)`{3,}"
-    return re.findall(pattern, text, re.DOTALL)
+    pattern = r"(`{3,})[^\n]*\n(.*?)\1"
+    return [m[1] for m in re.findall(pattern, text, re.DOTALL)]
 
 
 def main() -> None:
