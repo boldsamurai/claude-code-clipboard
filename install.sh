@@ -123,9 +123,8 @@ if [[ "$REPLY" =~ ^[Yy]$ ]]; then
         cat >> "$CLAUDE_MD" << 'MDEOF'
 
 ## Claude Code Clipboard Hook
-
-Always use fenced code blocks (```) for commands and code the user should copy or run.
-Never use inline code (`) for commands — only for referencing names in prose.
+- Always use fenced code blocks (```) for commands and code the user should copy or run.
+- Never use inline code (`) for commands — only for referencing names in prose.
 MDEOF
         echo "Formatting instructions added to $CLAUDE_MD"
     fi
