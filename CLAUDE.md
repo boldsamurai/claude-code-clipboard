@@ -30,6 +30,27 @@ python3 -m pytest test_copy_code_blocks.py -v
 - All clipboard backends must have `timeout=5` and `check=False` on subprocess calls
 - The script reads JSON from stdin (`last_assistant_message` key) — this is the Claude Code hook contract
 
+## Manual testing
+
+Test the hook without restarting Claude Code:
+
+```bash
+echo '{"last_assistant_message":"```bash\necho hello\n```"}' | python3 copy-code-blocks.py
+```
+
+If your clipboard backend works, the code block content should appear in your clipboard.
+
+## Adding a new clipboard backend
+
+Update these 4 places:
+
+1. `ClipboardBackend` enum — add new member
+2. `DETECTION_ORDER` list — insert at appropriate priority position
+3. `copy_to_clipboard()` — add `case` branch with `timeout=5` and `check=False`
+4. `test_copy_code_blocks.py` — add test in `TestCopyToClipboard`
+
+If the backend supports clipboard history, also add it to `HISTORY_BACKENDS`.
+
 ## Known limitations
 
 - Regex doesn't handle nested fences (4-backtick block containing 3-backtick lines) — documented as xfail in tests
