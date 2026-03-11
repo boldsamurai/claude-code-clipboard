@@ -288,6 +288,14 @@ class TestMain:
             main()
         mock_copy.assert_not_called()
 
+    @patch(f"{mod.__name__}.copy_to_clipboard")
+    def test_non_string_message_does_nothing(self, mock_copy):
+        for value in [42, ["a", "b"], None, {"nested": "dict"}, True]:
+            payload = {"last_assistant_message": value}
+            with patch(f"{mod.__name__}.sys.stdin", _FakeStdin(payload)):
+                main()
+        mock_copy.assert_not_called()
+
 
 class _FakeStdin:
     """Minimal file-like object that json.load() can consume."""
