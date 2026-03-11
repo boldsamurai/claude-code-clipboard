@@ -99,6 +99,40 @@ else:
 
 PYEOF
 
+# Offer to add formatting instructions to global CLAUDE.md
+CLAUDE_MD="$HOME/.claude/CLAUDE.md"
+SECTION_MARKER="## Claude Code Clipboard Hook"
+
+echo ""
+echo "The hook works best when Claude uses fenced code blocks for all commands."
+echo -n "Add formatting instructions to $CLAUDE_MD? [y/N] "
+read -r REPLY
+
+if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+    if [ -f "$CLAUDE_MD" ] && grep -qF "$SECTION_MARKER" "$CLAUDE_MD"; then
+        echo "Already configured in $CLAUDE_MD — skipping."
+    else
+        if [ ! -f "$CLAUDE_MD" ]; then
+            mkdir -p "$(dirname "$CLAUDE_MD")"
+            touch "$CLAUDE_MD"
+        fi
+        # Ensure there's a blank line before our section
+        if [ -s "$CLAUDE_MD" ] && [ "$(tail -c 1 "$CLAUDE_MD")" != "" ]; then
+            echo "" >> "$CLAUDE_MD"
+        fi
+        cat >> "$CLAUDE_MD" << 'MDEOF'
+
+## Claude Code Clipboard Hook
+
+Always use fenced code blocks (```) for commands and code the user should copy or run.
+Never use inline code (`) for commands — only for referencing names in prose.
+MDEOF
+        echo "Formatting instructions added to $CLAUDE_MD"
+    fi
+else
+    echo "Skipped — you can add them manually later."
+fi
+
 echo ""
 echo "=== Installation complete ==="
 echo "Restart Claude Code to activate the hook."
