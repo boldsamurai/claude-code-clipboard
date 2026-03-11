@@ -54,6 +54,37 @@ else
     echo "Script not found at $HOOK_DIR/$SCRIPT_NAME — nothing to remove."
 fi
 
+# Remove formatting instructions from global CLAUDE.md
+CLAUDE_MD="$HOME/.claude/CLAUDE.md"
+SECTION_MARKER="## Claude Code Clipboard Hook"
+
+if [ -f "$CLAUDE_MD" ] && grep -qF "$SECTION_MARKER" "$CLAUDE_MD"; then
+    python3 << 'PYEOF'
+import os
+import re
+
+claude_md_path = os.path.expanduser("~/.claude/CLAUDE.md")
+
+with open(claude_md_path) as f:
+    content = f.read()
+
+# Remove the section: from "## Claude Code Clipboard Hook" to the next "## " or end of file
+pattern = r"\n*## Claude Code Clipboard Hook\n.*?(?=\n## |\Z)"
+cleaned = re.sub(pattern, "", content, flags=re.DOTALL).strip()
+
+if cleaned:
+    with open(claude_md_path, "w") as f:
+        f.write(cleaned + "\n")
+    print("Formatting instructions removed from " + claude_md_path)
+else:
+    os.remove(claude_md_path)
+    print("CLAUDE.md was empty after removal — deleted " + claude_md_path)
+
+PYEOF
+else
+    echo "No formatting instructions found in CLAUDE.md — nothing to remove."
+fi
+
 echo ""
 echo "=== Uninstall complete ==="
 echo "Restart Claude Code to apply changes."

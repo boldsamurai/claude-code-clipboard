@@ -112,6 +112,7 @@ The log file is automatically rotated at 100 KB.
 - `~/.claude/hooks/copy-code-blocks.py` — the hook script
 - `~/.claude/hooks/copy-code-blocks.log` — log file (created on first run, auto-rotated at 100 KB)
 - A `Stop` hook entry in `~/.claude/settings.json`
+- *(optional, prompted during install)* A `## Claude Code Clipboard Hook` section in `~/.claude/CLAUDE.md` — instructs Claude to always use fenced code blocks for commands, improving clipboard capture accuracy
 
 No other files are modified. No dependencies beyond Python stdlib.
 
