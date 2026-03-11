@@ -53,5 +53,4 @@ If the backend supports clipboard history, also add it to `HISTORY_BACKENDS`.
 
 ## Known limitations
 
-- Regex doesn't handle nested fences (4-backtick block containing 3-backtick lines) — documented as xfail in tests
 - `clip.exe` (WSL) uses UTF-16LE encoding which may cause issues with some non-ASCII characters
