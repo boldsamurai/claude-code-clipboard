@@ -54,6 +54,15 @@ else
     echo "Script not found at $HOOK_DIR/$SCRIPT_NAME — nothing to remove."
 fi
 
+# Remove log files
+LOG_FILE="$HOOK_DIR/copy-code-blocks.log"
+for f in "$LOG_FILE" "$LOG_FILE.1"; do
+    if [ -f "$f" ]; then
+        rm "$f"
+        echo "Log removed: $f"
+    fi
+done
+
 # Remove formatting instructions from global CLAUDE.md
 CLAUDE_MD="$HOME/.claude/CLAUDE.md"
 SECTION_MARKER="## Claude Code Clipboard Hook"
