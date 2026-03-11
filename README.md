@@ -78,9 +78,39 @@ Then restart Claude Code.
 - The hook fires on **every** Claude response, even if you don't need the code blocks. This is invisible in practice — the script runs in ~50ms and doesn't block Claude.
 - Only **fenced** code blocks (`` ``` ``) are extracted. Inline code (`` `like this` ``) is ignored by design — it's typically not something you'd paste into a terminal.
 
+## Troubleshooting
+
+If code blocks aren't appearing in your clipboard, check the log file:
+
+```bash
+cat ~/.claude/hooks/copy-code-blocks.log
+```
+
+Common messages:
+
+| Message | Meaning | Fix |
+|---------|---------|-----|
+| `No clipboard backend found` | No supported clipboard tool detected | Install one — see [Supported clipboard tools](#supported-clipboard-tools) |
+| `<tool> exited with code <N>` | Clipboard tool ran but failed | Check if the tool works on its own (e.g. `echo test \| xclip -selection clipboard`) |
+| `<tool> timed out after 5s` | Clipboard tool hung | Restart the tool or check if your display server is running |
+| `Invalid JSON on stdin` | Hook received unexpected input | Likely a Claude Code bug — [open an issue](https://github.com/boldsamurai/claude-code-clipboard/issues) |
+
+### Verbose logging
+
+By default, only warnings are logged. For detailed output (every response processed), set:
+
+```bash
+export CLAUDE_CLIPBOARD_LOG_LEVEL=DEBUG
+```
+
+Then restart Claude Code. The log will show how many code blocks were found and which backend was used.
+
+The log file is automatically rotated at 100 KB.
+
 ## What gets installed
 
 - `~/.claude/hooks/copy-code-blocks.py` — the hook script
+- `~/.claude/hooks/copy-code-blocks.log` — log file (created on first run, auto-rotated at 100 KB)
 - A `Stop` hook entry in `~/.claude/settings.json`
 
 No other files are modified. No dependencies beyond Python stdlib.
