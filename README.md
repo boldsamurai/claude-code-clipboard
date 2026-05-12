@@ -44,7 +44,9 @@ For the best experience, use **copyq** or another clipboard manager with history
 
 ### Windows / WSL
 
-Claude Code on Windows runs inside WSL. The hook auto-detects `clip.exe` (built into WSL) to copy directly to the Windows clipboard. No extra installation needed — it just works.
+On WSL the hook auto-detects `clip.exe` (built into WSL) and copies directly to the Windows clipboard. No extra installation needed.
+
+For **native Windows** (PowerShell, no WSL) use `install.ps1` instead of `install.sh` — see [Install](#install) below. Windows 10/11 has a built-in clipboard history (`Win+V`), which gives you a usable multi-entry experience even without `copyq`.
 
 ## Requirements
 
@@ -54,19 +56,38 @@ Claude Code on Windows runs inside WSL. The hook auto-detects `clip.exe` (built 
 
 ## Install
 
+**Linux, macOS, WSL:**
+
 ```bash
 git clone https://github.com/boldsamurai/claude-code-clipboard.git
 cd claude-code-clipboard
 bash install.sh
 ```
 
+**Native Windows (PowerShell 5.1+):**
+
+```powershell
+git clone https://github.com/boldsamurai/claude-code-clipboard.git
+cd claude-code-clipboard
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
 Then restart Claude Code.
 
 ## Uninstall
 
+**Linux, macOS, WSL:**
+
 ```bash
 cd claude-code-clipboard
 bash uninstall.sh
+```
+
+**Native Windows:**
+
+```powershell
+cd claude-code-clipboard
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 ```
 
 Then restart Claude Code.
